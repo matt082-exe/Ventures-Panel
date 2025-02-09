@@ -972,6 +972,18 @@ document.addEventListener("keydown", function(event) {
         event.preventDefault(); // Blocks DevTools shortcuts
     }
 });
+                // Listen for keydown events on the document
+        document.addEventListener('keydown', function(event) {
+            // Check if the pressed keys are Ctrl + U
+            if (event.ctrlKey && event.key === 'u') {
+                // Prevent the default behavior (viewing source)
+                event.preventDefault();
+                alert("Ctrl+U is disabled.");
+            }
+        });
     </script>
+                        </head>
+<body>
+    <h1>Ctrl+U is disabled on this page</h1>
 </body>
 </html>
