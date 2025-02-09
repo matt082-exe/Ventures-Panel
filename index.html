@@ -699,10 +699,7 @@
                 <i class='bx bx-home'></i>
                 Home
             </a>
-            <a href="#" class="nav-link" data-section="keyGenerator" onclick="showKeyGenerator()">
-                <i class='bx bx-key'></i>
-                Key Generator
-            </a>
+
             <a href="#" class="nav-link" data-section="settings" onclick="showSettings()">
                 <i class='bx bx-cog'></i>
                 Settings
@@ -737,45 +734,6 @@
                         </div>
                     </div>
 
-                    <div class="chart-container" id="keyChart">
-                        <h3 style="margin-bottom: 20px;">Key Generation History</h3>
-                        <!-- Chart bars will be added dynamically -->
-                    </div>
-                </div>
-            </div>
-
-            <div class="key-generator" id="keyGenerator">
-                <div class="card">
-                    <h2>Generate New Key</h2>
-                    <div class="input-group">
-                        <select id="keyDuration">
-                            <option value="1">1 Day</option>
-                            <option value="7">7 Days</option>
-                            <option value="30">30 Days</option>
-                            <option value="365">1 Year</option>
-                        </select>
-                        <i class='bx bx-time'></i>
-                    </div>
-                    <button onclick="generateKey()" id="generateKeyBtn">
-                        <span>Generate Key</span>
-                        <span class="loading-spinner" style="display: none;"></span>
-                    </button>
-                    <div class="generated-key" id="generatedKey"></div>
-
-                    <div class="key-history">
-                        <h3>
-                            <i class='bx bx-history'></i>
-                            Recent Keys
-                        </h3>
-                        <div class="search-bar">
-                            <input type="text" id="keySearch" placeholder="Search keys...">
-                            <i class='bx bx-search'></i>
-                        </div>
-                        <ul class="key-list" id="keyList"></ul>
-                    </div>
-                </div>
-            </div>
-
             <div class="settings-screen" id="settingsScreen">
                 <div class="card">
                     <h2>Settings</h2>
@@ -803,17 +761,6 @@
                             <p>Username: <span id="currentUsername"></span></p>
                             <p>Last Login: <span id="lastLogin"></span></p>
                         </div>
-
-                        <div class="settings-card">
-                            <h3 style="margin-bottom: 15px;">Statistics</h3>
-                            <p>Keys Generated: <span id="totalKeysGenerated">0</span></p>
-                            <p>Active Keys: <span id="currentActiveKeys">0</span></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         const users = {
@@ -962,113 +909,7 @@
                 new Date(key.expiry) > new Date()
             ).length;
         }
-
-        async function generateKey() {
-            const generateBtn = document.getElementById('generateKeyBtn');
-            
-            await simulateLoading(generateBtn, async () => {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                let key = '';
-                for (let i = 0; i < 12; i++) {
-                    key += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                
-                const keyElement = document.getElementById('generatedKey');
-                keyElement.style.display = 'block';
-                keyElement.innerHTML = `
-                    ${key}
-                    <button class="copy-btn" onclick="copyKey('${key}')">
-                        <i class='bx bx-copy'></i>
-                    </button>
-                `;
-
-                const duration = document.getElementById('keyDuration').value;
-                const expiryDate = new Date();
-                expiryDate.setDate(expiryDate.getDate() + parseInt(duration));
-
-                keyHistory.unshift({
-                    key: key,
-                    duration: duration,
-                    generated: new Date().toLocaleString(),
-                    expiry: expiryDate
-                });
-
-                // Update key generation data for chart
-                keyGenerationData.pop();
-                keyGenerationData.unshift(keyGenerationData[0] + 1);
-
-                updateKeyHistory();
-                updateStats();
-                updateChart();
-                showNotification('New key generated successfully!');
-            });
-        }
-
-        async function copyKey(key) {
-            try {
-                await navigator.clipboard.writeText(key);
-                showNotification('Key copied to clipboard!');
-            } catch (err) {
-                showNotification('Failed to copy key');
-            }
-        }
-
-        function updateKeyHistory(keys = keyHistory) {
-            const keyList = document.getElementById('keyList');
-            keyList.innerHTML = '';
-
-            keys.slice(0, 5).forEach(keyData => {
-                const li = document.createElement('li');
-                const isExpired = new Date(keyData.expiry) < new Date();
-                const expiresIn = Math.ceil((new Date(keyData.expiry) - new Date()) / (1000 * 60 * 60 * 24));
-                
-                let statusClass = 'active';
-                let statusText = 'Active';
-                let statusIcon = 'bx-check-circle';
-                
-                if (isExpired) {
-                    statusClass = 'expired';
-                    statusText = 'Expired';
-                    statusIcon = 'bx-x-circle';
-                } else if (expiresIn <= 3) {
-                    statusClass = 'warning';
-                    statusText = `Expires in ${expiresIn} day${expiresIn === 1 ? '' : 's'}`;
-                    statusIcon = 'bx-time';
-                }
-
-                li.innerHTML = `
-                    <div class="key-info">
-                        <strong>${keyData.key}</strong>
-                        <div class="key-meta">
-                            Generated: ${keyData.generated}
-                        </div>
-                    </div>
-                    <div class="key-actions">
-                        <button class="copy-btn" onclick="copyKey('${keyData.key}')">
-                            <i class='bx bx-copy'></i>
-                        </button>
-                        <span class="status ${statusClass}">
-                            <i class='bx ${statusIcon}'></i>
-                            ${statusText}
-                        </span>
-                    </div>
-                `;
-                keyList.appendChild(li);
-            });
-        }
-
-        function updateStats() {
-            const now = new Date();
-            const activeKeys = keyHistory.filter(key => new Date(key.expiry) > now);
-            const expiringKeys = activeKeys.filter(key => 
-                Math.ceil((new Date(key.expiry) - now) / (1000 * 60 * 60 * 24)) <= 3
-            );
-
-            document.getElementById('totalKeys').textContent = keyHistory.length;
-            document.getElementById('activeKeys').textContent = activeKeys.length;
-            document.getElementById('expiringKeys').textContent = expiringKeys.length;
-        }
-
+ 
         function updateChart() {
             const chartContainer = document.getElementById('keyChart');
             const containerWidth = chartContainer.clientWidth - 40; // Padding
